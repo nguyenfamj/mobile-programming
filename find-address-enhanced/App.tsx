@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, KeyboardAvoidingView } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Alert,
+} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 interface apiRespone {
   info: {
@@ -74,7 +83,7 @@ export default function App() {
     latitudeDelta: 0.0322,
     longitudeDelta: 0.0221,
   });
-  const [locationName, setLocationName] = useState<string>('Haaga-Helia Pasila');
+  const [locationName, setLocationName] = useState<string>('Your location');
 
   const fetchGeolocation = async () => {
     const response = await fetch(
@@ -89,6 +98,25 @@ export default function App() {
     setLocationName(data?.results[0]?.locations[0]?.adminArea6);
   };
 
+  useEffect(() => {
+    (async () => {
+      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+      console.log(canAskAgain);
+      Location.requestForegroundPermissionsAsync();
+      if (status != 'granted') {
+        Alert.alert('No permission to get location');
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({});
+      console.log(location);
+      setRegion({
+        ...region,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
+
   return (
     <View style={styles.container}>
       <MapView style={{ flex: 1, width: '100%', height: '100%' }} region={region}>
@@ -100,6 +128,7 @@ export default function App() {
       <KeyboardAvoidingView
         style={{
           marginBottom: 50,
+
           width: 320,
           position: 'absolute',
           bottom: 50,
